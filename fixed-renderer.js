@@ -40,6 +40,8 @@ const undoBtn = document.getElementById('undoBtn');
 const closeEditPanelBtn = document.getElementById('closeEditPanelBtn');
 const loadingOverlay = document.getElementById('loading-overlay');
 const loadingText = document.getElementById('loading-text');
+const saveStatus = document.getElementById('save-status');
+const saveTime = document.getElementById('save-time');
 
 // Application state
 let appState = {
@@ -49,10 +51,15 @@ let appState = {
   isEditing: false,
   editHistory: [],
   currentEditIndex: 0,
+  lastSaved: null, 
+  isDirty: false,
+  autosaveTimer: null,
+  autosaveInterval: 30000, // 30 seconds
   settings: {
     ollamaEndpoint: 'http://localhost:11434/api/generate',
     ollamaModel: 'granite3.3:latest',
-    theme: 'light'
+    theme: 'light',
+    autosave: true
   }
 };
 
@@ -77,6 +84,9 @@ async function initializeApp() {
   
   // Check Ollama connection
   checkOllamaConnection();
+  
+  // Initialize autosave
+  initializeAutosave();
   
   console.log('App initialization complete');
 }
@@ -187,6 +197,12 @@ function handleMarkdownInput(event) {
   console.log('Handling markdown input...');
   appState.markdown = event.target.value;
   updatePreview();
+  
+  // Mark document as dirty (unsaved changes)
+  if (!appState.isDirty) {
+    appState.isDirty = true;
+    updateSaveIndicator('unsaved');
+  }
 }
 
 // Handle markdown input in split view
@@ -195,6 +211,12 @@ function handleSplitMarkdownInput(event) {
   appState.markdown = event.target.value;
   markdownInput.value = appState.markdown;
   updatePreview();
+  
+  // Mark document as dirty (unsaved changes)
+  if (!appState.isDirty) {
+    appState.isDirty = true;
+    updateSaveIndicator('unsaved');
+  }
 }
 
 // Update preview with current markdown
@@ -575,12 +597,31 @@ function escapeRegExp(string) {
 // Create a new document
 function createNewDocument() {
   console.log('Creating new document...');
+  
+  if (appState.isDirty) {
+    // Ask to save changes
+    if (confirm('Do you want to save the current document before creating a new one?')) {
+      saveDocument().then(() => {
+        resetDocument();
+      });
+    } else {
+      resetDocument();
+    }
+  } else {
+    resetDocument();
+  }
+}
+
+// Reset document state
+function resetDocument() {
   appState.currentFilePath = null;
   appState.markdown = '';
+  appState.isDirty = false;
   markdownInput.value = '';
   splitMarkdownInput.value = '';
   updatePreview();
   currentFileElement.textContent = 'No file opened';
+  updateSaveIndicator('saved');
 }
 
 // Handle file opened event
@@ -588,16 +629,20 @@ function handleFileOpened(event, { filePath, content }) {
   console.log('Opening file:', filePath);
   appState.currentFilePath = filePath;
   appState.markdown = content;
+  appState.isDirty = false;
   markdownInput.value = content;
   splitMarkdownInput.value = content;
   updatePreview();
   currentFileElement.textContent = path.basename(filePath);
+  updateSaveIndicator('saved');
 }
 
 // Save document
 async function saveDocument() {
   try {
     console.log('Saving document...');
+    updateSaveIndicator('saving');
+    
     const result = await ipcRenderer.invoke('save-file', { 
       filePath: appState.currentFilePath, 
       content: appState.markdown || markdownInput.value 
@@ -606,14 +651,18 @@ async function saveDocument() {
     if (result.success) {
       appState.currentFilePath = result.filePath;
       currentFileElement.textContent = path.basename(result.filePath);
+      appState.isDirty = false;
+      updateSaveIndicator('saved');
       return true;
     } else {
       alert(`Error saving file: ${result.message}`);
+      updateSaveIndicator('unsaved');
       return false;
     }
   } catch (error) {
     console.error('Error saving file:', error);
     alert(`Error saving file: ${error.message}`);
+    updateSaveIndicator('unsaved');
     return false;
   }
 }
@@ -631,6 +680,7 @@ function openSettingsModal() {
   ollamaEndpointInput.value = appState.settings.ollamaEndpoint;
   ollamaModelInput.value = appState.settings.ollamaModel;
   themeSelect.value = appState.settings.theme;
+  document.getElementById('autosave-checkbox').checked = appState.settings.autosave;
   
   // Clear test results
   ollamaTestResult.textContent = '';
@@ -687,13 +737,15 @@ async function saveSettings() {
   const newSettings = {
     ollamaEndpoint: ollamaEndpointInput.value,
     ollamaModel: ollamaModelInput.value,
-    theme: themeSelect.value
+    theme: themeSelect.value,
+    autosave: document.getElementById('autosave-checkbox').checked
   };
   
   try {
     const result = await ipcRenderer.invoke('save-settings', newSettings);
     
     if (result.success) {
+      const oldAutosaveSetting = appState.settings.autosave;
       appState.settings = newSettings;
       
       // Apply theme
@@ -701,6 +753,11 @@ async function saveSettings() {
         document.body.classList.add('dark-theme');
       } else {
         document.body.classList.remove('dark-theme');
+      }
+      
+      // Update autosave if setting changed
+      if (oldAutosaveSetting !== newSettings.autosave) {
+        initializeAutosave();
       }
       
       // Close the modal
@@ -867,6 +924,108 @@ function openShortcutsModal() {
 function closeShortcutsModal() {
   shortcutsModal.classList.remove('show');
 }
+
+// Initialize autosave functionality
+function initializeAutosave() {
+  // Clear any existing timer
+  if (appState.autosaveTimer) {
+    clearInterval(appState.autosaveTimer);
+  }
+  
+  // Set up new timer if autosave is enabled
+  if (appState.settings.autosave) {
+    appState.autosaveTimer = setInterval(autosave, appState.autosaveInterval);
+    console.log(`Autosave initialized with interval: ${appState.autosaveInterval}ms`);
+  }
+  
+  // Initialize save indicator
+  updateSaveIndicator(appState.isDirty ? 'unsaved' : 'saved');
+}
+
+// Autosave function
+async function autosave() {
+  // Only autosave if:
+  // 1. Autosave is enabled
+  // 2. Document has unsaved changes
+  // 3. Document has a file path (was saved before)
+  // 4. Not currently in edit mode
+  if (appState.settings.autosave && 
+      appState.isDirty && 
+      appState.currentFilePath && 
+      !appState.isEditing) {
+    
+    console.log('Autosaving document...');
+    updateSaveIndicator('saving');
+    
+    try {
+      // Save document
+      const success = await saveDocument();
+      
+      if (success) {
+        console.log('Autosave successful');
+        appState.isDirty = false;
+        updateSaveIndicator('saved');
+      } else {
+        console.error('Autosave failed');
+        updateSaveIndicator('unsaved');
+      }
+    } catch (error) {
+      console.error('Error during autosave:', error);
+      updateSaveIndicator('unsaved');
+    }
+  }
+}
+
+// Update save indicator
+function updateSaveIndicator(status) {
+  // Remove all status classes
+  saveStatus.classList.remove('saving', 'saved', 'unsaved');
+  
+  // Set new status
+  saveStatus.classList.add(status);
+  
+  // Update status text
+  switch (status) {
+    case 'saving':
+      saveStatus.textContent = 'Saving...';
+      break;
+    case 'saved':
+      appState.lastSaved = new Date();
+      saveStatus.textContent = 'Saved';
+      updateSaveTime();
+      break;
+    case 'unsaved':
+      saveStatus.textContent = 'Unsaved';
+      updateSaveTime();
+      break;
+  }
+}
+
+// Update the save time display
+function updateSaveTime() {
+  if (appState.lastSaved) {
+    const now = new Date();
+    const diff = now - appState.lastSaved;
+    
+    if (diff < 60000) { // Less than a minute
+      saveTime.textContent = 'just now';
+    } else if (diff < 3600000) { // Less than an hour
+      const minutes = Math.floor(diff / 60000);
+      saveTime.textContent = `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`;
+    } else if (diff < 86400000) { // Less than a day
+      const hours = Math.floor(diff / 3600000);
+      saveTime.textContent = `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+    } else {
+      // Format date
+      saveTime.textContent = appState.lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+  } else {
+    saveTime.textContent = '';
+  }
+}
+
+// Update the save time display every minute
+setInterval(updateSaveTime, 60000);
 
 // Initialize the application when the DOM is loaded
 document.addEventListener('DOMContentLoaded', initializeApp); 

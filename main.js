@@ -222,7 +222,8 @@ ipcMain.handle('get-settings', () => {
   return {
     ollamaEndpoint: store.get('ollamaEndpoint', 'http://localhost:11434/api/generate'),
     ollamaModel: store.get('ollamaModel', 'mistral-small:24b'),
-    theme: store.get('theme', 'light')
+    theme: store.get('theme', 'light'),
+    autosave: store.get('autosave', true)
   };
 });
 

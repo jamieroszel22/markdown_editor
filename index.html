@@ -33,6 +33,10 @@
             <button class="tab-btn" data-tab="split">Split View</button>
           </div>
           <div class="actions">
+            <div id="save-indicator" class="save-indicator">
+              <span id="save-status">Saved</span>
+              <span id="save-time"></span>
+            </div>
             <button id="copyEditBtn" class="action-btn">
               <span class="action-icon">✏️</span>
               Copy Edit
@@ -138,6 +142,10 @@
                 <option value="light">Light</option>
                 <option value="dark">Dark</option>
               </select>
+            </div>
+            <div class="setting-item checkbox-item">
+              <input type="checkbox" id="autosave-checkbox" checked>
+              <label for="autosave-checkbox">Enable Autosave (every 30 seconds)</label>
             </div>
           </div>
         </div>
