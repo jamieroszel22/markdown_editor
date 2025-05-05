@@ -161,6 +161,7 @@ function setupEventListeners() {
   ipcRenderer.on('new-document', createNewDocument);
   ipcRenderer.on('file-opened', handleFileOpened);
   ipcRenderer.on('save-document', saveDocument);
+  ipcRenderer.on('save-document-as', saveDocumentAs);
   ipcRenderer.on('open-settings', openSettingsModal);
 }
 
@@ -499,6 +500,13 @@ async function saveDocument() {
     alert(`Error saving file: ${error.message}`);
     return false;
   }
+}
+
+// Save document as
+async function saveDocumentAs() {
+  console.log('Save document as...');
+  appState.currentFilePath = null;
+  return saveDocument();
 }
 
 // Open settings modal
