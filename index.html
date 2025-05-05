@@ -41,6 +41,10 @@
               <span class="action-icon">⚙️</span>
               Settings
             </button>
+            <button id="shortcutsBtn" class="action-btn shortcuts-btn">
+              <span class="action-icon">⌨️</span>
+              Shortcuts
+            </button>
           </div>
         </div>
         
@@ -147,6 +151,106 @@
     <div id="loading-overlay" class="loading-overlay hidden">
       <div class="spinner"></div>
       <p id="loading-text">Processing with Ollama...</p>
+    </div>
+    
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="shortcuts-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Keyboard Shortcuts</h2>
+          <span class="close-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+          <div class="shortcuts-group">
+            <h3>File Operations</h3>
+            <table class="shortcuts-table">
+              <tr>
+                <td><kbd>Ctrl</kbd> + <kbd>N</kbd></td>
+                <td>New Document</td>
+              </tr>
+              <tr>
+                <td><kbd>Ctrl</kbd> + <kbd>O</kbd></td>
+                <td>Open Document</td>
+              </tr>
+              <tr>
+                <td><kbd>Ctrl</kbd> + <kbd>S</kbd></td>
+                <td>Save Document</td>
+              </tr>
+              <tr>
+                <td><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd></td>
+                <td>Save As</td>
+              </tr>
+            </table>
+          </div>
+          
+          <div class="shortcuts-group">
+            <h3>Edit Operations</h3>
+            <table class="shortcuts-table">
+              <tr>
+                <td><kbd>Ctrl</kbd> + <kbd>E</kbd></td>
+                <td>Copy Edit</td>
+              </tr>
+              <tr>
+                <td><kbd>Alt</kbd> + <kbd>A</kbd></td>
+                <td>Accept Edit</td>
+              </tr>
+              <tr>
+                <td><kbd>Alt</kbd> + <kbd>R</kbd></td>
+                <td>Reject Edit</td>
+              </tr>
+              <tr>
+                <td><kbd>Alt</kbd> + <kbd>I</kbd></td>
+                <td>Ignore Edit</td>
+              </tr>
+              <tr>
+                <td><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>I</kbd></td>
+                <td>Ignore All Similar Edits</td>
+              </tr>
+              <tr>
+                <td><kbd>Alt</kbd> + <kbd>Z</kbd></td>
+                <td>Undo Edit</td>
+              </tr>
+              <tr>
+                <td><kbd>Alt</kbd> + <kbd>J</kbd></td>
+                <td>Jump to Edit</td>
+              </tr>
+            </table>
+          </div>
+          
+          <div class="shortcuts-group">
+            <h3>View Operations</h3>
+            <table class="shortcuts-table">
+              <tr>
+                <td><kbd>Ctrl</kbd> + <kbd>1</kbd></td>
+                <td>Switch to Editor Tab</td>
+              </tr>
+              <tr>
+                <td><kbd>Ctrl</kbd> + <kbd>2</kbd></td>
+                <td>Switch to Preview Tab</td>
+              </tr>
+              <tr>
+                <td><kbd>Ctrl</kbd> + <kbd>3</kbd></td>
+                <td>Switch to Split View Tab</td>
+              </tr>
+              <tr>
+                <td><kbd>Ctrl</kbd> + <kbd>,</kbd></td>
+                <td>Open Settings</td>
+              </tr>
+              <tr>
+                <td><kbd>Ctrl</kbd> + <kbd>/</kbd></td>
+                <td>Show Keyboard Shortcuts</td>
+              </tr>
+              <tr>
+                <td><kbd>Esc</kbd></td>
+                <td>Close Panels/Modals</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="close-shortcuts-btn" class="cancel-btn">Close</button>
+        </div>
+      </div>
     </div>
   </div>
 

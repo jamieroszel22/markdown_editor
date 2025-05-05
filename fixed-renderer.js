@@ -14,6 +14,9 @@ const ollamaStatusText = document.getElementById('ollama-status-text');
 const copyEditBtn = document.getElementById('copyEditBtn');
 const currentFileElement = document.getElementById('current-file');
 const settingsModal = document.getElementById('settings-modal');
+const shortcutsModal = document.getElementById('shortcuts-modal');
+const shortcutsBtn = document.getElementById('shortcutsBtn');
+const closeShortcutsBtn = document.getElementById('close-shortcuts-btn');
 const ollamaEndpointInput = document.getElementById('ollama-endpoint');
 const ollamaModelInput = document.getElementById('ollama-model');
 const themeSelect = document.getElementById('theme-select');
@@ -148,7 +151,8 @@ function setupEventListeners() {
   
   // Settings modal
   document.querySelector('.actions').addEventListener('click', event => {
-    if (event.target.classList.contains('settings-btn')) {
+    if (event.target.classList.contains('settings-btn') || 
+        event.target.parentElement.classList.contains('settings-btn')) {
       openSettingsModal();
     }
   });
@@ -156,6 +160,11 @@ function setupEventListeners() {
   document.querySelectorAll('.close-modal, .cancel-btn').forEach(element => {
     element.addEventListener('click', closeSettingsModal);
   });
+  
+  // Shortcuts modal
+  shortcutsBtn.addEventListener('click', openShortcutsModal);
+  closeShortcutsBtn.addEventListener('click', closeShortcutsModal);
+  shortcutsModal.querySelector('.close-modal').addEventListener('click', closeShortcutsModal);
   
   testOllamaBtn.addEventListener('click', testOllamaConnection);
   saveSettingsBtn.addEventListener('click', saveSettings);
@@ -166,6 +175,11 @@ function setupEventListeners() {
   ipcRenderer.on('save-document', saveDocument);
   ipcRenderer.on('save-document-as', saveDocumentAs);
   ipcRenderer.on('open-settings', openSettingsModal);
+  ipcRenderer.on('show-shortcuts', openShortcutsModal);
+  ipcRenderer.on('request-copy-edit', handleCopyEdit);
+  
+  // Global keyboard shortcuts
+  document.addEventListener('keydown', handleKeyboardShortcuts);
 }
 
 // Handle markdown input in main editor
@@ -729,6 +743,129 @@ Doubble-click on the editor to insert this sample text for testing the copy edit
   markdownInput.value = sampleText;
   appState.markdown = sampleText;
   updatePreview();
+}
+
+// Handle keyboard shortcuts
+function handleKeyboardShortcuts(event) {
+  // Don't trigger shortcuts when user is typing in an input field
+  const isInputActive = ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
+  
+  // Common actions
+  if (!isInputActive && event.ctrlKey && event.key === '/') {
+    event.preventDefault();
+    openShortcutsModal();
+    return;
+  }
+  
+  if (event.key === 'Escape') {
+    // Close any open modals or panels
+    if (shortcutsModal.classList.contains('show')) {
+      closeShortcutsModal();
+      return;
+    }
+    
+    if (settingsModal.classList.contains('show')) {
+      closeSettingsModal();
+      return;
+    }
+    
+    if (!editPanel.classList.contains('hidden')) {
+      closeEditPanel();
+      return;
+    }
+  }
+  
+  // Tab switching shortcuts
+  if (!isInputActive && event.ctrlKey && event.key === '1') {
+    event.preventDefault();
+    switchTab('editor');
+    return;
+  }
+  
+  if (!isInputActive && event.ctrlKey && event.key === '2') {
+    event.preventDefault();
+    switchTab('preview');
+    return;
+  }
+  
+  if (!isInputActive && event.ctrlKey && event.key === '3') {
+    event.preventDefault();
+    switchTab('split');
+    return;
+  }
+  
+  // Edit operations
+  if (!isInputActive && event.ctrlKey && event.key === 'e') {
+    event.preventDefault();
+    if (appState.ollamaStatus === 'connected') {
+      handleCopyEdit();
+    }
+    return;
+  }
+  
+  // Settings
+  if (!isInputActive && event.ctrlKey && event.key === ',') {
+    event.preventDefault();
+    openSettingsModal();
+    return;
+  }
+  
+  // Edit panel shortcuts (only active when edit panel is visible)
+  if (!editPanel.classList.contains('hidden')) {
+    // Accept edit
+    if (event.altKey && event.key === 'a') {
+      event.preventDefault();
+      acceptEdit();
+      return;
+    }
+    
+    // Reject edit
+    if (event.altKey && event.key === 'r') {
+      event.preventDefault();
+      rejectEdit();
+      return;
+    }
+    
+    // Ignore edit
+    if (event.altKey && event.key === 'i' && !event.shiftKey) {
+      event.preventDefault();
+      ignoreEdit();
+      return;
+    }
+    
+    // Ignore all similar edits
+    if (event.altKey && event.shiftKey && event.key === 'I') {
+      event.preventDefault();
+      ignoreAllSimilarEdits();
+      return;
+    }
+    
+    // Undo edit
+    if (event.altKey && event.key === 'z') {
+      event.preventDefault();
+      if (!undoBtn.disabled) {
+        undoEdit();
+      }
+      return;
+    }
+    
+    // Jump to edit
+    if (event.altKey && event.key === 'j') {
+      event.preventDefault();
+      jumpToEdit();
+      return;
+    }
+  }
+}
+
+// Open shortcuts modal
+function openShortcutsModal() {
+  shortcutsModal.classList.add('show');
+}
+
+// Close shortcuts modal
+function closeShortcutsModal() {
+  shortcutsModal.classList.remove('show');
 }
 
 // Initialize the application when the DOM is loaded

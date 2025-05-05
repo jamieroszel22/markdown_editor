@@ -844,3 +844,76 @@ body.dark-theme .markdown-preview table td {
 .edit-location-btn .icon {
   margin-right: 5px;
 }
+
+/* Keyboard Shortcuts */
+.shortcuts-group {
+  margin-bottom: 24px;
+}
+
+.shortcuts-group h3 {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 12px;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 6px;
+}
+
+.shortcuts-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.shortcuts-table tr {
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.shortcuts-table tr:last-child {
+  border-bottom: none;
+}
+
+.shortcuts-table td {
+  padding: 8px 12px;
+  vertical-align: middle;
+}
+
+.shortcuts-table td:first-child {
+  width: 180px;
+  white-space: nowrap;
+}
+
+kbd {
+  display: inline-block;
+  padding: 3px 6px;
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  color: #444;
+  background-color: #f7f7f7;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  box-shadow: 0 1px 1px rgba(0,0,0,.2);
+  margin: 2px;
+}
+
+.shortcuts-btn {
+  margin-left: 8px;
+}
+
+/* Dark Theme Adjustments */
+body.dark-theme .shortcuts-group h3 {
+  color: #eee;
+  border-bottom-color: #444;
+}
+
+body.dark-theme .shortcuts-table tr {
+  border-bottom-color: #333;
+}
+
+body.dark-theme kbd {
+  color: #ddd;
+  background-color: #333;
+  border-color: #555;
+  box-shadow: 0 1px 1px rgba(255,255,255,.1);
+}
