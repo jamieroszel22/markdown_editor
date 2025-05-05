@@ -27,6 +27,8 @@ const editTypeElement = document.getElementById('edit-type');
 const originalTextElement = document.getElementById('original-text');
 const correctedTextElement = document.getElementById('corrected-text');
 const editExplanationElement = document.getElementById('edit-explanation');
+const contextElement = document.getElementById('context-text');
+const jumpToEditBtn = document.getElementById('jumpToEditBtn');
 const acceptBtn = document.getElementById('acceptBtn');
 const rejectBtn = document.getElementById('rejectBtn');
 const ignoreBtn = document.getElementById('ignoreBtn');
@@ -142,6 +144,7 @@ function setupEventListeners() {
   ignoreBtn.addEventListener('click', ignoreEdit);
   ignoreAllBtn.addEventListener('click', ignoreAllSimilarEdits);
   undoBtn.addEventListener('click', undoEdit);
+  jumpToEditBtn.addEventListener('click', jumpToEdit);
   
   // Settings modal
   document.querySelector('.actions').addEventListener('click', event => {
@@ -318,6 +321,105 @@ function displayCurrentEdit() {
   
   // Update undo button state
   undoBtn.disabled = appState.currentEditIndex === 0;
+  
+  // Update context preview
+  updateContextPreview(currentEdit.original);
+}
+
+// Update context preview with surrounding text
+function updateContextPreview(searchText) {
+  if (!searchText || !appState.markdown) {
+    contextElement.textContent = 'Context not available';
+    return;
+  }
+  
+  try {
+    // Escape special regex characters
+    const escapedText = escapeRegExp(searchText);
+    
+    // Find the position of the text in the document
+    const regex = new RegExp(escapedText, 'i');
+    const match = regex.exec(appState.markdown);
+    
+    if (!match) {
+      contextElement.textContent = 'Context not available - text not found';
+      return;
+    }
+    
+    const position = match.index;
+    const startPos = Math.max(0, position - 50);
+    const endPos = Math.min(appState.markdown.length, position + searchText.length + 50);
+    
+    // Get text before and after the match
+    let before = appState.markdown.substring(startPos, position);
+    let after = appState.markdown.substring(position + searchText.length, endPos);
+    
+    // Ensure we don't cut words in half at the boundaries
+    if (startPos > 0) {
+      // Find the first space or newline to start at a word boundary
+      const firstSpace = before.search(/[\s\n]/);
+      if (firstSpace > -1) {
+        before = before.substring(firstSpace + 1);
+      }
+    }
+    
+    if (endPos < appState.markdown.length) {
+      // Find the last space or newline to end at a word boundary
+      const lastSpace = after.search(/[\s\n][^\s\n]*$/);
+      if (lastSpace > -1) {
+        after = after.substring(0, lastSpace + 1);
+      }
+    }
+    
+    // Create HTML with the highlighted text
+    contextElement.innerHTML = `${before}<mark>${searchText}</mark>${after}`;
+    
+    // Store the position for jumping to edit
+    appState.editHistory[appState.currentEditIndex].position = position;
+    
+  } catch (error) {
+    console.error('Error updating context preview:', error);
+    contextElement.textContent = 'Error generating context preview';
+  }
+}
+
+// Jump to the edit position in the editor
+function jumpToEdit() {
+  if (!appState.isEditing || appState.currentEditIndex >= appState.editHistory.length) {
+    return;
+  }
+  
+  const currentEdit = appState.editHistory[appState.currentEditIndex];
+  const position = currentEdit.position;
+  
+  if (position === undefined) {
+    // Try to find the position again
+    updateContextPreview(currentEdit.original);
+    if (currentEdit.position === undefined) {
+      alert('Cannot locate the text in the document');
+      return;
+    }
+  }
+  
+  // Switch to editor tab if not already there
+  if (!document.getElementById('editor-tab').classList.contains('active')) {
+    switchTab('editor');
+  }
+  
+  // Focus the editor
+  markdownInput.focus();
+  
+  // Set the cursor position and scroll to it
+  markdownInput.setSelectionRange(position, position + currentEdit.original.length);
+  
+  // Create a temporary highlight effect
+  const text = markdownInput.value;
+  const before = text.substring(0, position);
+  const highlight = text.substring(position, position + currentEdit.original.length);
+  const after = text.substring(position + currentEdit.original.length);
+  
+  // Don't actually change the text, just focus and scroll
+  // The browser will automatically scroll to the selection
 }
 
 // Close the edit panel
