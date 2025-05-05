@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  markdown-editor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: markdown-editor
+    environment:
+      - DISPLAY=${DISPLAY}
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ${HOME}/.Xauthority:/home/appuser/.Xauthority
+      - ./documents:/home/appuser/documents
+    network_mode: "host"
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
+    driver: local 
