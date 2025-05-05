@@ -1,0 +1,55 @@
+{
+  "name": "markdown-editor-ollama",
+  "version": "1.0.0",
+  "description": "A markdown editor with Ollama integration for copy editing",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "concurrently \"npm run server\" \"electron .\"",
+    "server": "node server.js",
+    "build": "electron-builder",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.ibm.markdown-editor-ollama",
+    "productName": "Markdown Editor with Ollama",
+    "mac": {
+      "category": "public.app-category.productivity"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "files": [
+      "**/*",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!**/node_modules/*.d.ts",
+      "!**/node_modules/.bin",
+      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+      "!.editorconfig",
+      "!**/._*",
+      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+      "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+      "!**/{appveyor.yml,.travis.yml,circle.yml}",
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+    ]
+  },
+  "author": "IBM Redbooks",
+  "license": "MIT",
+  "dependencies": {
+    "electron-store": "^8.1.0",
+    "express": "^4.18.2",
+    "axios": "^1.6.0",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2",
+    "marked": "^9.1.0",
+    "highlight.js": "^11.8.0",
+    "diff": "^5.1.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.1",
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4"
+  }
+}

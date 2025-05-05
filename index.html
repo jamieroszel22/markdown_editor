@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdown Editor with Ollama</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <div id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <h2>Markdown Editor</h2>
+      </div>
+      <div class="sidebar-content">
+        <div class="file-info">
+          <p id="current-file">No file opened</p>
+        </div>
+        <div class="ollama-status">
+          <div id="ollama-indicator" class="status-indicator disconnected"></div>
+          <span id="ollama-status-text">Ollama: Disconnected</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="editor-container">
+        <div class="editor-header">
+          <div class="tabs">
+            <button class="tab-btn active" data-tab="editor">Editor</button>
+            <button class="tab-btn" data-tab="preview">Preview</button>
+            <button class="tab-btn" data-tab="split">Split View</button>
+          </div>
+          <div class="actions">
+            <button id="copyEditBtn" class="action-btn">
+              <span class="action-icon">✏️</span>
+              Copy Edit
+            </button>
+            <button class="action-btn settings-btn">
+              <span class="action-icon">⚙️</span>
+              Settings
+            </button>
+          </div>
+        </div>
+        
+        <div class="editor-content">
+          <div id="editor-tab" class="tab-content active">
+            <textarea id="markdown-input" placeholder="Start writing your markdown here..."></textarea>
+          </div>
+          
+          <div id="preview-tab" class="tab-content">
+            <div id="preview-content" class="markdown-preview"></div>
+          </div>
+          
+          <div id="split-tab" class="tab-content split-view">
+            <textarea id="split-markdown-input" placeholder="Start writing your markdown here..."></textarea>
+            <div id="split-preview-content" class="markdown-preview"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="edit-panel" class="edit-panel hidden">
+        <div class="edit-panel-header">
+          <h3>Suggested Edits</h3>
+          <button id="closeEditPanelBtn" class="close-btn">&times;</button>
+        </div>
+        <div id="edit-progress">
+          <div id="progress-bar">
+            <div id="progress-indicator"></div>
+          </div>
+          <span id="progress-text">Edit 0 of 0</span>
+        </div>
+        <div id="current-edit" class="current-edit">
+          <div class="edit-type">
+            <span id="edit-type-label">Type:</span>
+            <span id="edit-type">-</span>
+          </div>
+          <div class="edit-change">
+            <span class="original-text" id="original-text">-</span>
+            <span class="arrow">→</span>
+            <span class="corrected-text" id="corrected-text">-</span>
+          </div>
+          <div class="edit-explanation">
+            <span id="edit-explanation">-</span>
+          </div>
+        </div>
+        <div class="edit-actions">
+          <button id="acceptBtn" class="edit-btn accept">Accept</button>
+          <button id="rejectBtn" class="edit-btn reject">Reject</button>
+          <button id="ignoreBtn" class="edit-btn ignore">Ignore</button>
+          <button id="ignoreAllBtn" class="edit-btn ignore-all">Ignore All</button>
+          <button id="undoBtn" class="edit-btn undo" disabled>Undo</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="settings-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Settings</h2>
+          <span class="close-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+          <div class="settings-group">
+            <h3>Ollama Configuration</h3>
+            <div class="setting-item">
+              <label for="ollama-endpoint">Endpoint URL:</label>
+              <input type="text" id="ollama-endpoint" value="http://localhost:11434/api/generate">
+            </div>
+            <div class="setting-item">
+              <label for="ollama-model">Model:</label>
+              <input type="text" id="ollama-model" value="granite3.3:latest">
+            </div>
+            <button id="test-ollama-btn" class="test-btn">Test Connection</button>
+            <div id="ollama-test-result" class="test-result"></div>
+          </div>
+          
+          <div class="settings-group">
+            <h3>Editor Settings</h3>
+            <div class="setting-item">
+              <label for="theme-select">Theme:</label>
+              <select id="theme-select">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="save-settings-btn" class="save-btn">Save Settings</button>
+          <button class="cancel-btn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="loading-overlay" class="loading-overlay hidden">
+      <div class="spinner"></div>
+      <p id="loading-text">Processing with Ollama...</p>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.0/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+  <script src="fixed-renderer.js"></script>
+</body>
+</html>
